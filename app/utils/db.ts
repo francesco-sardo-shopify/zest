@@ -83,9 +83,13 @@ export async function getAllBooks(): Promise<Book[]> {
 }
 
 // Get a single book by ID
-export async function getBook(id: string): Promise<Book | undefined> {
+export async function getBook(id: string): Promise<Book> {
   const db = await initDB();
-  return db.get('books', id);
+  const book = await db.get('books', id);
+  if (!book) {
+    throw new Error('Book not found');
+  }
+  return book;
 }
 
 // Update an existing book

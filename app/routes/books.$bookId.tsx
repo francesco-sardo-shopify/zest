@@ -1,9 +1,8 @@
 import type { Route } from "./+types/books.$bookId";
-import { useRef, useEffect, useState } from "react";
-import { redirect, useParams } from "react-router";
+import { useRef, useEffect } from "react";
+import { redirect } from "react-router";
 import * as EPUBJS from 'epubjs';
 import { deleteBook, getBook, updateBook } from "../utils/db";
-import type { Book } from "../utils/db";
 import { TopBar } from "../components/TopBar";
 
 export function meta({ params }: Route.MetaArgs) {
@@ -34,32 +33,22 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
 
   // Convert Blob to ArrayBuffer for EPUBJS
   const arrayBuffer = await book!.file.arrayBuffer();
+  const epub = EPUBJS.default(arrayBuffer);
   
-  return { book, arrayBuffer };
+  return { book, epub };
 }
 
-// Define the loader data type
-type LoaderData = {
-  book: Book;
-  arrayBuffer: ArrayBuffer;
-};
 
-export default function BookViewer({ loaderData }: { loaderData: LoaderData }) {
-  const { book, arrayBuffer } = loaderData;
-  const [currentSection, setCurrentSection] = useState<string>("");
+export default function BookViewer({ loaderData }: Route.ComponentProps) {
+  const { book, epub } = loaderData;
   const viewerRef = useRef<HTMLDivElement>(null);
   const renditionRef = useRef<any>(null);
-  const bookRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!viewerRef.current || !arrayBuffer) return;
-
-    // Create an EPUB.js book instance
-    const epubBook = EPUBJS.default(arrayBuffer);
-    bookRef.current = epubBook;
+    if (!viewerRef.current || !epub) return;
 
     // Render the book
-    const rendition = epubBook.renderTo(viewerRef.current, {
+    const rendition = epub.renderTo(viewerRef.current, {
       width: "100%",
       height: "100%",
       spread: "none"
@@ -68,7 +57,7 @@ export default function BookViewer({ loaderData }: { loaderData: LoaderData }) {
 
     // Load the saved location if available
     const startReading = async () => {
-      await epubBook.ready;
+      await epub.ready;
       if (book.location) {
         rendition.display(book.location);
       } else {
@@ -83,7 +72,7 @@ export default function BookViewer({ loaderData }: { loaderData: LoaderData }) {
       if (!book) return;
       console.log({location})
       const {start, percentage} = location;      
-      
+
       console.log({start, percentage})
       
       // Update the book with the new location and progress
@@ -112,11 +101,8 @@ export default function BookViewer({ loaderData }: { loaderData: LoaderData }) {
       if (renditionRef.current) {
         renditionRef.current.off("locationChanged", saveLocation);
       }
-      if (bookRef.current) {
-        bookRef.current.destroy();
-      }
     };
-  }, [arrayBuffer, book]);
+  }, [epub, book]);
 
   return (
     <div className="flex flex-col h-screen">

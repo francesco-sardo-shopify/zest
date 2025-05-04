@@ -4,6 +4,8 @@
 - Persist chats in idb
 - App Icon
 - Better UX
+- Navigate book with left and right taps
+- Notes and highlights
 
 
 
