@@ -47,7 +47,7 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
 
     // Create an EPUB.js book instance
     bookRef.current = EPUBJS.default(arrayBuffer);
-
+    bookRef.current.locations.load(book.locations.toString())
     // Render the book
     const rendition = bookRef.current.renderTo(viewerRef.current, {
       width: "100%",

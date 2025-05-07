@@ -22,6 +22,7 @@ export interface Book {
   title: string;
   authors: string[];
   markdown: string;
+  locations: string;
   file: Blob;
   cover: Blob;
   createdAt: Date;

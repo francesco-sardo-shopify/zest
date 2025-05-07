@@ -43,6 +43,8 @@ export async function parseEpub(file: File): Promise<Book> {
 
   
   const markdown = await convertEpubToMarkdown(arrayBuffer);
+  const locations = JSON.stringify(await book.locations.generate(1500));
+
   // Create a new book object
   const now = new Date();
   const newBook: Book = {
@@ -51,6 +53,7 @@ export async function parseEpub(file: File): Promise<Book> {
     authors,
     cover,
     markdown,
+    locations,
     file: new Blob([arrayBuffer], { type: 'application/epub+zip' }),    
     createdAt: now,
     updatedAt: now,
