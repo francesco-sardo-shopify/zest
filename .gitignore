@@ -5,5 +5,3 @@
 /.react-router/
 /build/
 
-# Vercel
-/.vercel/

@@ -58,6 +58,7 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
     // Load the saved location if available
     const startReading = async () => {
       await epub.ready;
+      await epub.locations.generate(1024)
       if (book.location) {
         rendition.display(book.location);
       } else {
@@ -71,8 +72,7 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
     const saveLocation = async (location: any) => {
       if (!book) return;
       console.log({location})
-      const {start, percentage} = location;      
-
+      const {start, end, percentage} = location;
       console.log({start, percentage})
       
       // Update the book with the new location and progress
