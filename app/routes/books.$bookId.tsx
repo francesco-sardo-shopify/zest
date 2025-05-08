@@ -1,7 +1,7 @@
 import type { Route } from "./+types/books.$bookId";
 import { useRef, useEffect, useState } from "react";
 import { redirect } from "react-router";
-import Epub, * as EPUBJS from 'epubjs';
+import Epub, * as EPUBJS from "epubjs";
 import { deleteBook, getBook, updateBook } from "../utils/db";
 import type { Book } from "../utils/db";
 import { TopBar } from "../components/TopBar";
@@ -13,19 +13,22 @@ export function meta({ params }: Route.MetaArgs) {
   ];
 }
 
-export async function clientAction({ request, params }: Route.ClientActionArgs) {      
-    const method = request.method;
-    const {bookId} = params
-        
-    if (method === "DELETE") {
-      await deleteBook(bookId);
-      return redirect("/")      
-    }    
-    
-    if (method === "POST") {
-      const formData = await request.formData();
-      console.log("post", formData);      
-    }
+export async function clientAction({
+  request,
+  params,
+}: Route.ClientActionArgs) {
+  const method = request.method;
+  const { bookId } = params;
+
+  if (method === "DELETE") {
+    await deleteBook(bookId);
+    return redirect("/");
+  }
+
+  if (method === "POST") {
+    const formData = await request.formData();
+    console.log("post", formData);
+  }
 }
 
 export async function clientLoader({ params }: Route.ClientLoaderArgs) {
@@ -34,7 +37,6 @@ export async function clientLoader({ params }: Route.ClientLoaderArgs) {
   const arrayBuffer = await book!.file.arrayBuffer();
   return { book, arrayBuffer };
 }
-
 
 export default function BookViewer({ loaderData }: Route.ComponentProps) {
   const { book, arrayBuffer } = loaderData;
@@ -47,12 +49,12 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
 
     // Create an EPUB.js book instance
     bookRef.current = EPUBJS.default(arrayBuffer);
-    bookRef.current.locations.load(book.locations.toString())
+    bookRef.current.locations.load(book.locations.toString());
     // Render the book
     const rendition = bookRef.current.renderTo(viewerRef.current, {
       width: "100%",
       height: "100%",
-      spread: "none"
+      spread: "none",
     });
     renditionRef.current = rendition;
 
@@ -65,20 +67,54 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
         rendition.display();
       }
     };
-    
+
     startReading();
 
     // Save location when user navigates
     const saveLocation = async (location: any) => {
       if (!book) return;
-      console.log({location})
-      const {start, end, percentage} = location;      
-                  
+      console.log({ location });
+      const { start, end, percentage } = location;
+
+      // Get the text content between start and end locations
+      let content = "";
+      if (bookRef.current && start && end) {
+        try {
+          // Using the approach suggested in the EPUB CFI specification
+          // Extract base, start and end components
+          const cfiBase = start.replace(/!.*/, '');
+          const cfiStart = start.replace(/.*!/, '').replace(/\)$/, '');
+          let cfiEnd = end.replace(/.*!/, '').replace(/\)$/, '');
+          
+          // Extend the end CFI by one character to include the last character
+          // Most CFI ends will be in format like "/4/2[element]/160/1:532"
+          // We need to increment the character offset (532 in this example)
+          const charOffsetMatch = cfiEnd.match(/:(\d+)$/);
+          if (charOffsetMatch) {
+            const charOffset = parseInt(charOffsetMatch[1]);
+            const newCharOffset = charOffset + 1;
+            cfiEnd = cfiEnd.replace(/:\d+$/, `:${newCharOffset}`);
+            console.log("Extended end CFI by one character:", cfiEnd);
+          }
+          
+          // Combine to create the proper range CFI
+          const cfiRange = `${cfiBase}!,${cfiStart},${cfiEnd})`;
+          console.log({ cfiBase, cfiStart, cfiEnd, cfiRange });
+          
+          const range = await bookRef.current.getRange(cfiRange);
+          console.log({ range });
+          content = range.toString();
+          console.log("Current page content:", content);
+        } catch (error) {
+          console.error("Error getting text range:", error);
+        }
+      }
+
       // Update the book with the new location and progress
       await updateBook({
         ...book,
         location: start,
-        progress: percentage * 100
+        progress: percentage * 100,
       });
     };
 
@@ -112,38 +148,60 @@ export default function BookViewer({ loaderData }: Route.ComponentProps) {
       <TopBar currentPage="reader" bookId={book.id} />
 
       {/* Book Viewer */}
-      <div 
-        ref={viewerRef} 
+      <div
+        ref={viewerRef}
         className="flex-grow overflow-hidden"
         style={{ height: "calc(100vh - 56px)" }}
       ></div>
-      
+
       {/* Navigation Controls */}
       <div className="fixed bottom-0 left-0 right-0 p-2 flex justify-between bg-white/80 backdrop-blur-sm">
-        <button 
+        <button
           onClick={() => {
             renditionRef.current?.prev();
           }}
           className="p-2 rounded-full bg-yellow-500 text-white"
           aria-label="Previous page"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </button>
-        
-        <button 
+
+        <button
           onClick={() => {
             renditionRef.current?.next();
           }}
           className="p-2 rounded-full bg-yellow-500 text-white"
           aria-label="Next page"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5l7 7-7 7"
+            />
           </svg>
         </button>
       </div>
     </div>
   );
-} 
+}

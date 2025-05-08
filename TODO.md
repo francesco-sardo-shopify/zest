@@ -1,6 +1,5 @@
-- Persist percentage
 - Parse current text displayed (save on db?)
-- Remove all Vercel stuff. Pure SPA. Deploy on github pages.
+- Deploy on github pages.
 - Persist chats in idb
 - App Icon
 - Better UX
