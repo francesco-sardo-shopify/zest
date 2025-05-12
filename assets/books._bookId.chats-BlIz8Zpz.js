@@ -1,0 +1,1 @@
+import{p as r,q as a}from"./chunk-AYJ5UCUI-pMwHqBCg.js";import{getChatsByBookId as e}from"./db-Dghpep6g.js";async function d({params:c}){const{bookId:t}=c,o=await e(t);return o.length>0?r(a("/chats/:chatId",{chatId:o[0].id})):r(a("/books/:bookId/chats/new",{bookId:t}))}export{d as clientLoader};

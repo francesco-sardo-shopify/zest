@@ -1,0 +1,1 @@
+import{p as o,q as r}from"./chunk-AYJ5UCUI-pMwHqBCg.js";import{n}from"./index.browser-OxPLOBIU.js";import{addChat as d}from"./db-Dghpep6g.js";async function m({params:a}){const{bookId:e}=a,t={id:n(),bookId:e,title:"New conversation",messages:[],createdAt:new Date,updatedAt:new Date};return await d(t),o(r("/chats/:chatId",{chatId:t.id}))}export{m as clientLoader};
