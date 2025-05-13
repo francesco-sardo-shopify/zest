@@ -1,0 +1,4 @@
+- Create a new Chat. Test flow of opening old chat
+- Better Readme
+- PWA
+- Notes and highlights
